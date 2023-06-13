@@ -1,7 +1,7 @@
 package co.edu.sena.proyect_diana2687365.model.repository;
 
 import co.edu.sena.proyect_diana2687365.connection_test.ConnectionPool;
-import co.edu.sena.proyect_diana2687365.model.User;
+import co.edu.sena.proyect_diana2687365.model.beans.User;
 
 import java.sql.*;
 import java.util.ArrayList;
@@ -12,29 +12,26 @@ public class UserRepositoryImpl  implements Repository<User>{
 
     @Override
     public List<User> listAllObj() throws SQLException{
-        sql ="select u.user_id, u.user_firstname, u.user_lastname, u.user_email" +
+        sql = "select u.user_id, u.user_firstname, u.user_lastname, u.user_email, u.user_password " +
                 "from users_tbl u order by u.user_lastname, u.user_firstname";
-        List<User> users = new ArrayList<>();
 
-        try (Connection conn = ConnectionPool.getConnection()) {
-            try (Statement stmt = conn.createStatement()) {
-                try (ResultSet rs = stmt.executeQuery(sql)) {
+        List<User> users= new ArrayList<>();
+        try (Connection conn = ConnectionPool.getConnection();
+             Statement stmt = conn.createStatement();
+             ResultSet rs = stmt.executeQuery(sql)){
+            while (rs.next()){
+                User u = createObj(rs);
+                users.add(u);
+            }//While
+        }// try
 
-                    while (rs.next()) {
-                        User u = createObj(rs);
-                        users.add(u);
-                    }//while
-                }
-            }
-        }//try
         return users;
-
-    }// listAllObj
+    } // listAllObj
 
     @Override
     public User byIdObj(Integer id) throws SQLException {
-        sql ="select u.user_id, u.user_firstname, u.user_lastname, u.user_email" +
-                "from users_tbl u where u.user_id = ?";
+        sql ="select u.user_id, u.user_firstname, u.user_lastname, u.user_email, u.user_password " +
+                "from users_tbl u where u.user_id=?";
         User user = null;
 
         try(Connection conn= ConnectionPool.getConnection();
@@ -60,7 +57,7 @@ public class UserRepositoryImpl  implements Repository<User>{
                     "where user_id=?";
         } else {
             sql = "insert into users_tbl(user_firstname, user_lastname, user_email, user_password)"+
-                    "values(upper(?), upper(?), lower(?),"+
+                    "values(upper(?), upper(?), upper(?),"+
                     "aes_encrypt(?,'$2a$12$MvnynbqUim5hG4ub/Kh4y.lVIPK3FhJVPAX7sf9zftHc/e0E.tA/S'))";
         }
         try(Connection conn = ConnectionPool.getConnection();
@@ -72,11 +69,10 @@ public class UserRepositoryImpl  implements Repository<User>{
             if (user.getUser_id() != null){
                 ps.setInt(5, user.getUser_id());
             }
-            rowsAffected = ps.executeUpdate();
+            rowsAffected =ps.executeUpdate();
         }
-
         return rowsAffected;
-    }// saveObj
+    }//saveObj
 
 
     @Override
